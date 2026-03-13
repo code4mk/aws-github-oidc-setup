@@ -37,7 +37,8 @@ else
     --role-name "${IAM_ROLE_NAME}" \
     --assume-role-policy-document "${TRUST_POLICY}" \
     --description "Role assumed by GitHub Actions via OIDC for ${SCOPE_LABEL}" \
-    --max-session-duration 3600
+    --max-session-duration 3600 \
+    > /dev/null
   echo "    Role created."
 fi
 

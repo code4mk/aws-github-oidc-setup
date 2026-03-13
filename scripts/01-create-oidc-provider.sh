@@ -25,7 +25,8 @@ else
     --url "https://token.actions.githubusercontent.com" \
     --client-id-list "${OIDC_AUDIENCE}" \
     --thumbprint-list ${OIDC_THUMBPRINTS} \
-    --region "${AWS_REGION}"
+    --region "${AWS_REGION}" \
+    > /dev/null
 
   echo "    OIDC provider created: ${PROVIDER_ARN}"
 fi

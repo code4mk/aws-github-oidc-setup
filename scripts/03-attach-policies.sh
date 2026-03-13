@@ -25,14 +25,16 @@ if aws iam get-policy --policy-arn "${POLICY_ARN}" >/dev/null 2>&1; then
   aws iam create-policy-version \
     --policy-arn "${POLICY_ARN}" \
     --policy-document file://"${PERMISSIONS_POLICY_FILE}" \
-    --set-as-default
+    --set-as-default \
+    > /dev/null
   echo "    Policy updated with new default version."
 else
   echo "==> Creating IAM policy '${IAM_POLICY_NAME}'..."
   aws iam create-policy \
     --policy-name "${IAM_POLICY_NAME}" \
     --policy-document file://"${PERMISSIONS_POLICY_FILE}" \
-    --description "Permissions for GitHub Actions OIDC role (${GITHUB_ORG}/${GITHUB_REPO})"
+    --description "Permissions for GitHub Actions OIDC role (${GITHUB_ORG}/${GITHUB_REPO})" \
+    > /dev/null
   echo "    Policy created."
 fi
 
