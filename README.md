@@ -24,7 +24,12 @@ Bash scripts to configure AWS IAM for GitHub Actions OIDC authentication — no 
    cp .env.example .env
    nano .env
    ```
-   Fill in your `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ACCOUNT_ID`, `GITHUB_ORG`, and `GITHUB_REPO`.
+   Fill in your AWS credentials, account ID, and GitHub org. Set `OIDC_SCOPE` to control access:
+
+   | `OIDC_SCOPE` | `GITHUB_REPO` needed? | Trust policy subject |
+   |---|---|---|
+   | `"org"` | No | `repo:GITHUB_ORG/*` — any repo in the org can assume the role |
+   | `"repo"` | Yes | `repo:GITHUB_ORG/GITHUB_REPO:*` — only the specified repo |
 
 2. **Run Setup:**
 
@@ -137,7 +142,12 @@ This project uses multiple thumbprints (`OIDC_THUMBPRINTS`) for the GitHub OIDC 
 Edit `policies/permissions-policy.json` to grant only the specific permissions your workflow needs (e.g., only specific S3 buckets, ECR repositories, or ECS clusters/services).
 
 ### 3. Trust Policy Scoping
-The default trust policy (`policies/trust-policy.json`) uses `repo:ORG/REPO:*`. You can restrict this to specific branches or environments:
+The `OIDC_SCOPE` variable in `.env` controls how broadly the role can be assumed:
+
+- **`org`** (default) — any repo under `GITHUB_ORG` can assume the role. Great when you share one role across many repos.
+- **`repo`** — only `GITHUB_ORG/GITHUB_REPO` can assume the role. Use this for tighter, per-repo isolation.
+
+When using `OIDC_SCOPE="repo"`, you can further restrict by branch or environment by editing `policies/trust-policy.json`:
 
 | Pattern | Allows |
 |---------|--------|

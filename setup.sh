@@ -10,9 +10,15 @@ echo ""
 
 source "${SCRIPT_DIR}/.env"
 
+if [[ "${OIDC_SCOPE}" == "org" ]]; then
+  SCOPE_DISPLAY="all repos in ${GITHUB_ORG}"
+else
+  SCOPE_DISPLAY="${GITHUB_ORG}/${GITHUB_REPO}"
+fi
+
 echo "  AWS Account:  ${AWS_ACCOUNT_ID}"
 echo "  Region:       ${AWS_REGION}"
-echo "  GitHub Repo:  ${GITHUB_ORG}/${GITHUB_REPO}"
+echo "  OIDC Scope:   ${OIDC_SCOPE} (${SCOPE_DISPLAY})"
 echo "  IAM Role:     ${IAM_ROLE_NAME}"
 echo ""
 read -rp "Proceed with setup? (y/N): " CONFIRM

@@ -8,10 +8,19 @@ TRUST_POLICY_FILE="${SCRIPT_DIR}/../policies/trust-policy.json"
 
 echo "==> Preparing trust policy..."
 
+if [[ "${OIDC_SCOPE}" == "org" ]]; then
+  SUBJECT_CLAIM="repo:${GITHUB_ORG}/*"
+  SCOPE_LABEL="all repos in ${GITHUB_ORG}"
+else
+  SUBJECT_CLAIM="repo:${GITHUB_ORG}/${GITHUB_REPO}:*"
+  SCOPE_LABEL="${GITHUB_ORG}/${GITHUB_REPO}"
+fi
+
+echo "    Scope: ${SCOPE_LABEL}"
+
 TRUST_POLICY=$(sed \
   -e "s|ACCOUNT_ID|${AWS_ACCOUNT_ID}|g" \
-  -e "s|GITHUB_ORG|${GITHUB_ORG}|g" \
-  -e "s|GITHUB_REPO|${GITHUB_REPO}|g" \
+  -e "s|SUBJECT_CLAIM|${SUBJECT_CLAIM}|g" \
   "${TRUST_POLICY_FILE}")
 
 echo "==> Checking if IAM role '${IAM_ROLE_NAME}' already exists..."
@@ -27,7 +36,7 @@ else
   aws iam create-role \
     --role-name "${IAM_ROLE_NAME}" \
     --assume-role-policy-document "${TRUST_POLICY}" \
-    --description "Role assumed by GitHub Actions via OIDC for ${GITHUB_ORG}/${GITHUB_REPO}" \
+    --description "Role assumed by GitHub Actions via OIDC for ${SCOPE_LABEL}" \
     --max-session-duration 3600
   echo "    Role created."
 fi
