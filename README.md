@@ -24,12 +24,14 @@ Bash scripts to configure AWS IAM for GitHub Actions OIDC authentication — no 
    cp .env.example .env
    nano .env
    ```
-   Fill in your AWS credentials, account ID, and GitHub org. Set `OIDC_SCOPE` to control access:
+   Fill in your AWS credentials, account ID, and GitHub org. Set `GITHUB_REPO` to control access scope:
 
-   | `OIDC_SCOPE` | `GITHUB_REPO` needed? | Trust policy subject |
-   |---|---|---|
-   | `"org"` | No | `repo:GITHUB_ORG/*` — any repo in the org can assume the role |
-   | `"repo"` | Yes | `repo:GITHUB_ORG/GITHUB_REPO:*` — only the specified repo |
+   | `GITHUB_REPO` | Trust policy subject |
+   |---|---|
+   | `"*"` | `repo:ORG/*` — any repo in the org can assume the role |
+   | `"my-app"` | `repo:ORG/my-app:*` — single repo, all refs |
+   | `"my-app:{dev,main}"` | Branch-locked — only `dev` and `main` branches |
+   | `"my-app:{dev,main},backend:{dev,main}"` | Multiple repos, each with specific branches |
 
 2. **Run Setup:**
 
@@ -142,18 +144,29 @@ This project uses multiple thumbprints (`OIDC_THUMBPRINTS`) for the GitHub OIDC 
 Edit `policies/permissions-policy.json` to grant only the specific permissions your workflow needs (e.g., only specific S3 buckets, ECR repositories, or ECS clusters/services).
 
 ### 3. Trust Policy Scoping
-The `OIDC_SCOPE` variable in `.env` controls how broadly the role can be assumed:
+The `GITHUB_REPO` variable in `.env` controls how broadly the role can be assumed:
 
-- **`org`** (default) — any repo under `GITHUB_ORG` can assume the role. Great when you share one role across many repos.
-- **`repo`** — only `GITHUB_ORG/GITHUB_REPO` can assume the role. Use this for tighter, per-repo isolation.
+```bash
+# All repos in the org
+GITHUB_REPO="*"
 
-When using `OIDC_SCOPE="repo"`, you can further restrict by branch or environment by editing `policies/trust-policy.json`:
+# Single repo, all refs
+GITHUB_REPO="my-app"
 
-| Pattern | Allows |
+# Only specific branches from one repo
+GITHUB_REPO="my-app:{dev,main}"
+
+# Multiple repos, each with specific branches
+GITHUB_REPO="my-app:{dev,main},backend:{staging,main}"
+```
+
+The generated trust policy `sub` condition patterns:
+
+| `GITHUB_REPO` | Generated pattern |
 |---------|--------|
-| `repo:org/repo:*` | Any trigger from the repo |
-| `repo:org/repo:ref:refs/heads/main` | Only the `main` branch |
-| `repo:org/repo:environment:production` | Only the `production` environment |
+| `"*"` | `repo:org/*` |
+| `"my-app"` | `repo:org/my-app:*` |
+| `"my-app:{dev,main}"` | `repo:org/my-app:ref:refs/heads/dev`, `repo:org/my-app:ref:refs/heads/main` |
 
 ## Cleanup
 
