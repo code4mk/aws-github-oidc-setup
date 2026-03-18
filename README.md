@@ -30,8 +30,6 @@ Bash scripts to configure AWS IAM for GitHub Actions OIDC authentication — no 
    |---|---|
    | `"*"` | `repo:ORG/*` — any repo in the org can assume the role |
    | `"my-app"` | `repo:ORG/my-app:*` — single repo, all refs |
-   | `"my-app:{dev,main}"` | Branch-locked — only `dev` and `main` branches |
-   | `"my-app:{dev,main},backend:{dev,main}"` | Multiple repos, each with specific branches |
 
 2. **Run Setup:**
 
@@ -152,12 +150,6 @@ GITHUB_REPO="*"
 
 # Single repo, all refs
 GITHUB_REPO="my-app"
-
-# Only specific branches from one repo
-GITHUB_REPO="my-app:{dev,main}"
-
-# Multiple repos, each with specific branches
-GITHUB_REPO="my-app:{dev,main},backend:{staging,main}"
 ```
 
 The generated trust policy `sub` condition patterns:
@@ -166,7 +158,6 @@ The generated trust policy `sub` condition patterns:
 |---------|--------|
 | `"*"` | `repo:org/*` |
 | `"my-app"` | `repo:org/my-app:*` |
-| `"my-app:{dev,main}"` | `repo:org/my-app:ref:refs/heads/dev`, `repo:org/my-app:ref:refs/heads/main` |
 
 ## Cleanup
 

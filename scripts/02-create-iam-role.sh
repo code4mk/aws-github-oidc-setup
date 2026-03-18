@@ -8,50 +8,21 @@ TRUST_POLICY_FILE="${SCRIPT_DIR}/../policies/trust-policy.json"
 
 echo "==> Preparing trust policy..."
 
-CLAIMS=()
-INPUT="${GITHUB_REPO// /}"
+REPO="${GITHUB_REPO// /}"
 
-if [[ "${INPUT}" == "*" ]]; then
-  CLAIMS+=("repo:${GITHUB_ORG}/*")
+if [[ "${REPO}" == "*" ]]; then
+  SUBJECT_CLAIM="repo:${GITHUB_ORG}/*"
   SCOPE_LABEL="all repos in ${GITHUB_ORG}"
-elif [[ "${INPUT}" != *"{"* ]]; then
-  CLAIMS+=("repo:${GITHUB_ORG}/${INPUT}:*")
-  SCOPE_LABEL="${GITHUB_ORG}/${INPUT}"
 else
-  SCOPE_LABEL=""
-  while [[ -n "${INPUT}" ]]; do
-    REPO="${INPUT%%:\{*}"
-    INPUT="${INPUT#*\{}"
-    BRANCHES="${INPUT%%\}*}"
-    INPUT="${INPUT#*\}}"
-    INPUT="${INPUT#,}"
-
-    IFS=',' read -ra BRANCH_LIST <<< "${BRANCHES}"
-    for BRANCH in "${BRANCH_LIST[@]}"; do
-      CLAIMS+=("repo:${GITHUB_ORG}/${REPO}:ref:refs/heads/${BRANCH}")
-    done
-
-    [[ -n "${SCOPE_LABEL}" ]] && SCOPE_LABEL+=", "
-    SCOPE_LABEL+="${REPO}:{${BRANCHES}}"
-  done
+  SUBJECT_CLAIM="repo:${GITHUB_ORG}/${REPO}:*"
+  SCOPE_LABEL="${GITHUB_ORG}/${REPO}"
 fi
 
 echo "    Scope: ${SCOPE_LABEL}"
 
-# Build the trust policy JSON from the template
-TRUST_POLICY=$(sed -e "s|ACCOUNT_ID|${AWS_ACCOUNT_ID}|g" "${TRUST_POLICY_FILE}")
-
-if [[ ${#CLAIMS[@]} -eq 1 ]]; then
-  TRUST_POLICY="${TRUST_POLICY/SUBJECT_CLAIM/${CLAIMS[0]}}"
-else
-  CLAIM_ARRAY="["
-  for i in "${!CLAIMS[@]}"; do
-    [[ $i -gt 0 ]] && CLAIM_ARRAY+=","
-    CLAIM_ARRAY+="\"${CLAIMS[$i]}\""
-  done
-  CLAIM_ARRAY+="]"
-  TRUST_POLICY="${TRUST_POLICY/\"SUBJECT_CLAIM\"/${CLAIM_ARRAY}}"
-fi
+TRUST_POLICY=$(sed -e "s|ACCOUNT_ID|${AWS_ACCOUNT_ID}|g" \
+                   -e "s|SUBJECT_CLAIM|${SUBJECT_CLAIM}|g" \
+                   "${TRUST_POLICY_FILE}")
 
 echo "==> Checking if IAM role '${IAM_ROLE_NAME}' already exists..."
 
